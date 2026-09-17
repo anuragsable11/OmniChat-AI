@@ -1,0 +1,18 @@
+1.psql -U postgres
+2.Enter the password you set during install. Then at the postgres=# prompt:
+3.CREATE DATABASE omnichat;
+\l
+\q
+4.DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'omnichat',
+        'USER': 'postgres',
+        'PASSWORD': 'your_password',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+5.python manage.py makemigrations
+python manage.py migrate
+6.psql -U postgres -d omnichat -c "\dt"
