@@ -11,7 +11,7 @@ from .views import (
 router = DefaultRouter()
 
 router.register("bots", BotViewSet)
-router.register("conversations", ConversationViewSet)
+router.register("conversations", ConversationViewSet, basename="conversation")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -1,0 +1,16 @@
+# Web framework + API
+Django==6.1.1
+djangorestframework==3.18.1
+
+# Background task queue (Redis is the broker/result backend)
+celery==5.6.3
+redis==8.1.0
+
+# HTTP client, used to call the local Ollama server
+requests==2.34.2
+
+# Loads settings from .env (see .env.example)
+python-dotenv==1.2.3
+
+# PostgreSQL driver - for the planned move off SQLite
+psycopg[binary]==3.3.5
