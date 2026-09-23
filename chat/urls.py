@@ -10,8 +10,12 @@ from .views import (
 
 router = DefaultRouter()
 
-router.register("bots", BotViewSet)
-router.register("conversations", ConversationViewSet, basename="conversation")
+router.register("bots", BotViewSet, basename="bot")
+router.register(
+    "conversations",
+    ConversationViewSet,
+    basename="conversation",
+)
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -21,6 +25,7 @@ urlpatterns = [
             "get": "list",
             "post": "create",
         }),
+        name="conversation-messages",
     ),
-    path("chat/", chat),
+    path("chat/", chat, name="chat-api"),
 ]

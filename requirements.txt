@@ -14,3 +14,8 @@ python-dotenv==1.2.3
 
 # PostgreSQL driver - for the planned move off SQLite
 psycopg[binary]==3.3.5
+
+# WebSockets (ASGI server + Redis-backed channel layer)
+channels==4.3.2
+channels_redis==4.3.0
+daphne==4.2.3

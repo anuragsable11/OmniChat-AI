@@ -1,24 +1,22 @@
 """
-URL configuration for config project.
+URL configuration for the OmniChat AI project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+The landing page is served at the root, the chat app under /chat/
+and the REST API under /api/.
 """
 from django.contrib import admin
 from django.urls import include, path
 
+from chat.views import chat_page, landing_page, login_page, logout_page
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+
+    path("", landing_page, name="landing_page"),
+    path("chat/", chat_page, name="chat_page"),
+    path("login/", login_page, name="login_page"),
+    path("logout/", logout_page, name="logout_page"),
+
     path("api/", include("chat.urls")),
 ]

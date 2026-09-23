@@ -14,6 +14,7 @@ class Bot(models.Model):
 class Conversation(models.Model):
     bot=models.ForeignKey(Bot, on_delete=models.CASCADE)
     user=models.ForeignKey(User, on_delete=models.CASCADE)
+    title=models.CharField(max_length=200, blank=True, default="")
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
 
@@ -22,6 +23,24 @@ class Conversation(models.Model):
             models.Index(fields=['bot']),
             models.Index(fields=['updated_at'])
         ]
+
+    @property
+    def display_title(self):
+        """
+        Sidebar label: the saved title, else the first user
+        message, else a placeholder for an empty chat.
+        """
+        if self.title:
+            return self.title
+
+        first = self.message_set.filter(
+            sender="user"
+        ).order_by("created_at").first()
+
+        if first:
+            return first.content[:40]
+
+        return "New Chat"
 
     def __str__(self):
         return f"Conversation {self.id}"

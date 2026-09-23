@@ -36,9 +36,12 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    "daphne",
     'django.contrib.staticfiles',
     "chat",
     "rest_framework",
+    "channels",
+   
 ]
 
 MIDDLEWARE = [
@@ -56,7 +59,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,6 +72,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+
+ASGI_APPLICATION = "config.asgi.application"
 
 
 # Database
@@ -145,3 +150,32 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 
 CELERY_RESULT_SERIALIZER = "json"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            # redis-py 8 defaults socket_timeout to 5s, but
+            # channels_redis parks on a 5s blocking BRPOP. The two
+            # race, and idle sockets die with "Timeout reading from
+            # localhost:6379", so the read timeout is raised clear
+            # of the BRPOP window.
+            "hosts": [
+                {
+                    "host": "localhost",
+                    "port": 6379,
+                    "socket_timeout": 20,
+                    "socket_connect_timeout": 10,
+                    "socket_keepalive": True,
+                }
+            ],
+        },
+    },
+}
+
+# Auth redirects used by @login_required and the login page
+LOGIN_URL = "/login/"
+
+LOGIN_REDIRECT_URL = "/chat/"
+
+LOGOUT_REDIRECT_URL = "/login/"

@@ -1,0 +1,706 @@
+{% extends "base.html" %}
+
+{% block title %}OmniChat AI{% endblock %}
+
+{% block style %}
+  .app {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 52px 1fr;
+  }
+
+  /* ---------------- top bar ---------------- */
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 600;
+  }
+
+  .logo {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, var(--accent), #9d5cff);
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .topbar .right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .icon-btn {
+    background: none;
+    border: 0;
+    color: var(--muted);
+    font-size: 15px;
+    padding: 5px 7px;
+    border-radius: 7px;
+    text-decoration: none;
+  }
+
+  .icon-btn:hover {
+    background: var(--panel-2);
+    color: var(--text);
+  }
+
+  /* ---------------- layout ---------------- */
+
+  .main {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 0;
+  }
+
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .new-chat {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 9px;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+
+  .new-chat:hover { background: var(--accent-dk); }
+
+  .side-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--muted);
+    padding-left: 4px;
+  }
+
+  .conv-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 0;
+    flex: 1;
+  }
+
+  .conv {
+    text-align: left;
+    background: none;
+    border: 0;
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .conv:hover { background: var(--panel-2); }
+
+  .conv.active {
+    background: var(--panel-2);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+
+  .empty-note {
+    color: var(--muted);
+    font-size: 12.5px;
+    padding: 4px 10px;
+  }
+
+  /* ---------------- chat area ---------------- */
+
+  .chat {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: 0;
+  }
+
+  .messages {
+    overflow-y: auto;
+    padding: 26px 20px 8px;
+  }
+
+  .inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .welcome {
+    text-align: center;
+    margin-top: 12vh;
+    color: var(--muted);
+  }
+
+  .welcome .big {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .row { display: flex; }
+
+  .row.user { justify-content: flex-end; }
+
+  .bubble {
+    max-width: 78%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .row.user .bubble {
+    background: var(--user-bg);
+    border-bottom-right-radius: 5px;
+  }
+
+  .row.assistant .bubble {
+    background: var(--bot-bg);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 5px;
+  }
+
+  .row.error .bubble {
+    background: rgba(255, 107, 107, .1);
+    border: 1px solid rgba(255, 107, 107, .35);
+    color: var(--danger);
+    font-size: 13.5px;
+  }
+
+  .dots span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 3px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: blink 1.3s infinite;
+  }
+
+  .dots span:nth-child(2) { animation-delay: .2s; }
+  .dots span:nth-child(3) { animation-delay: .4s; }
+
+  @keyframes blink {
+    0%, 60%, 100% { opacity: .25; }
+    30%           { opacity: 1; }
+  }
+
+  .note {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ---------------- composer ---------------- */
+
+  .composer { padding: 10px 20px 20px; }
+
+  .composer-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 8px 8px 8px 14px;
+  }
+
+  .composer-inner:focus-within { border-color: var(--accent); }
+
+  #input {
+    flex: 1;
+    background: none;
+    border: 0;
+    outline: none;
+    resize: none;
+    max-height: 160px;
+    padding: 4px 0;
+    line-height: 1.5;
+  }
+
+  #send {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border: 0;
+    border-radius: 9px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+  }
+
+  #send:hover:not(:disabled) { background: var(--accent-dk); }
+
+  #send:disabled {
+    background: #343a52;
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .status {
+    max-width: 720px;
+    margin: 6px auto 0;
+    font-size: 11.5px;
+    color: var(--muted);
+    height: 15px;
+  }
+
+  .status .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3fbf7f;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  .status .dot.off { background: #6b7086; }
+  .status .dot.bad { background: var(--danger); }
+{% endblock %}
+
+{% block body %}
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">O</div>
+      <span>OmniChat AI</span>
+    </div>
+
+    <div class="right">
+      <span>{{ request.user.username }}</span>
+      <a class="icon-btn" href="/admin/" title="Admin">&#9881;</a>
+      <a class="icon-btn" href="{% url 'logout_page' %}" title="Sign out">&#128100;</a>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <aside class="sidebar">
+      <button class="new-chat" id="newChat">+ New Chat</button>
+
+      <div class="side-label">Conversations</div>
+
+      <div class="conv-list" id="convList">
+        <div class="empty-note">Loading&hellip;</div>
+      </div>
+    </aside>
+
+    <section class="chat">
+
+      <div class="messages" id="messages">
+        <div class="inner" id="inner">
+          <div class="welcome">
+            <div class="big">OmniChat AI</div>
+            <div>Hello! How can I help?</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="composer-inner">
+          <textarea id="input" rows="1"
+                    placeholder="Ask OmniChat&hellip;"></textarea>
+          <button id="send" title="Send">&#10148;</button>
+        </div>
+
+        <div class="status" id="status"></div>
+      </div>
+
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CSRF = "{{ csrf_token }}";
+
+  var convList = document.getElementById("convList");
+  var inner    = document.getElementById("inner");
+  var messages = document.getElementById("messages");
+  var input    = document.getElementById("input");
+  var sendBtn  = document.getElementById("send");
+  var statusEl = document.getElementById("status");
+
+  var activeId = null;   // conversation being viewed
+  var socket   = null;   // its WebSocket
+  var waiting  = false;  // a reply is in flight
+  var seenIds  = {};     // message ids already on screen
+  var streamEl = null;   // bubble currently being streamed into
+
+  // ---------- helpers ----------
+
+  function api(url, options) {
+    options = options || {};
+    options.credentials = "same-origin";
+    options.headers = Object.assign(
+      { "Content-Type": "application/json", "X-CSRFToken": CSRF },
+      options.headers || {}
+    );
+
+    return fetch(url, options).then(function (r) {
+      if (r.status === 403 || r.status === 401) {
+        window.location.href = "/login/";
+        throw new Error("not authenticated");
+      }
+      if (!r.ok) {
+        return r.text().then(function (t) {
+          throw new Error(t || ("HTTP " + r.status));
+        });
+      }
+      return r.status === 204 ? null : r.json();
+    });
+  }
+
+  function setStatus(text, kind) {
+    statusEl.innerHTML = text
+      ? '<span class="dot ' + (kind || "") + '"></span>' + text
+      : "";
+  }
+
+  function scrollDown() {
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function clearMessages() {
+    inner.innerHTML = "";
+    seenIds = {};
+    streamEl = null;
+  }
+
+  function showWelcome() {
+    clearMessages();
+    inner.innerHTML =
+      '<div class="welcome"><div class="big">OmniChat AI</div>' +
+      '<div>Hello! How can I help?</div></div>';
+  }
+
+  // textContent everywhere - model output is never trusted as HTML
+  function addBubble(role, text, id) {
+    if (id != null) {
+      if (seenIds[id]) { return null; }
+      seenIds[id] = true;
+    }
+
+    var welcome = inner.querySelector(".welcome");
+    if (welcome) { welcome.remove(); }
+
+    var row = document.createElement("div");
+    row.className = "row " + role;
+
+    var bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+
+    row.appendChild(bubble);
+    inner.appendChild(row);
+    scrollDown();
+
+    return row;
+  }
+
+  function addTyping() {
+    var row = document.createElement("div");
+    row.className = "row assistant";
+    row.id = "typing";
+    row.innerHTML =
+      '<div class="bubble"><span class="dots">' +
+      '<span></span><span></span><span></span></span>' +
+      '<div class="note">Generating locally, this can take a minute&hellip;</div></div>';
+
+    inner.appendChild(row);
+    scrollDown();
+  }
+
+  function removeTyping() {
+    var t = document.getElementById("typing");
+    if (t) { t.remove(); }
+  }
+
+  function setWaiting(on) {
+    waiting = on;
+    sendBtn.disabled = on;
+    input.disabled = on;
+    if (!on) { input.focus(); }
+  }
+
+  // ---------- conversations ----------
+
+  function loadConversations(selectId) {
+    return api("/api/conversations/").then(function (data) {
+      var items = data.results || data;
+
+      convList.innerHTML = "";
+
+      if (!items.length) {
+        convList.innerHTML =
+          '<div class="empty-note">No conversations yet.</div>';
+        return;
+      }
+
+      items.forEach(function (c) {
+        var b = document.createElement("button");
+        b.className = "conv" + (c.id === selectId ? " active" : "");
+        b.textContent = c.display_title || ("Conversation " + c.id);
+        b.dataset.id = c.id;
+        b.addEventListener("click", function () {
+          openConversation(c.id);
+        });
+        convList.appendChild(b);
+      });
+    });
+  }
+
+  function markActive(id) {
+    Array.prototype.forEach.call(
+      convList.querySelectorAll(".conv"),
+      function (el) {
+        el.classList.toggle("active", Number(el.dataset.id) === id);
+      }
+    );
+  }
+
+  function openConversation(id) {
+    if (id === activeId) { return; }
+
+    activeId = id;
+    markActive(id);
+    setWaiting(false);
+    removeTyping();
+    clearMessages();
+
+    // History first, so anything the socket missed still shows up.
+    api("/api/conversations/" + id + "/messages/")
+      .then(function (data) {
+        var items = data.results || data;
+
+        if (!items.length) {
+          showWelcome();
+          return;
+        }
+
+        items.forEach(function (m) {
+          addBubble(m.sender, m.content, m.id);
+        });
+      })
+      .catch(function (e) {
+        addBubble("error", "Could not load messages: " + e.message);
+      });
+
+    connectSocket(id);
+  }
+
+  function newConversation() {
+    return api("/api/conversations/", {
+      method: "POST",
+      body: "{}"
+    }).then(function (c) {
+      activeId = null;             // force openConversation to run
+      return loadConversations(c.id).then(function () {
+        openConversation(c.id);
+        return c.id;
+      });
+    });
+  }
+
+  // ---------- websocket ----------
+
+  function connectSocket(id) {
+    if (socket) {
+      socket.onclose = null;       // do not auto-reconnect the old one
+      socket.close();
+      socket = null;
+    }
+
+    var proto = window.location.protocol === "https:" ? "wss" : "ws";
+    var url = proto + "://" + window.location.host + "/ws/chat/" + id + "/";
+
+    setStatus("Connecting&hellip;", "off");
+
+    socket = new WebSocket(url);
+
+    socket.onopen = function () {
+      setStatus("Connected");
+    };
+
+    socket.onmessage = function (event) {
+      var data = JSON.parse(event.data);
+
+      // Generation started: drop the spinner, open an empty bubble.
+      if (data.type === "stream_start") {
+        removeTyping();
+
+        var row = addBubble("assistant", "");
+        streamEl = row.querySelector(".bubble");
+      }
+
+      // A few words at a time, as the model produces them.
+      else if (data.type === "stream_chunk") {
+        if (streamEl === null) {
+          removeTyping();
+          streamEl = addBubble("assistant", "").querySelector(".bubble");
+        }
+
+        streamEl.textContent += data.text;
+        scrollDown();
+      }
+
+      // Finished and saved. The full text settles any chunk that
+      // went missing, and the id keeps history loads from
+      // duplicating this message later.
+      else if (data.type === "ai_response") {
+        removeTyping();
+
+        if (streamEl !== null) {
+          streamEl.textContent = data.message;
+          streamEl = null;
+          if (data.message_id != null) { seenIds[data.message_id] = true; }
+        } else {
+          addBubble("assistant", data.message, data.message_id);
+        }
+
+        setWaiting(false);
+        scrollDown();
+        loadConversations(activeId);   // refresh the sidebar title
+      }
+
+      else if (data.type === "error") {
+        removeTyping();
+
+        // Drop a half-written bubble rather than leave it dangling.
+        if (streamEl !== null) {
+          streamEl.parentNode.remove();
+          streamEl = null;
+        }
+
+        addBubble("error", data.message);
+        setWaiting(false);
+      }
+    };
+
+    socket.onclose = function (e) {
+      if (e.code === 4001) {
+        window.location.href = "/login/";
+        return;
+      }
+      if (e.code === 4003) {
+        setStatus("Not your conversation", "bad");
+        return;
+      }
+
+      setStatus("Disconnected - retrying&hellip;", "bad");
+
+      // Reconnect only if this is still the open conversation.
+      setTimeout(function () {
+        if (activeId === id) { connectSocket(id); }
+      }, 2000);
+    };
+
+    socket.onerror = function () {
+      setStatus("Connection error", "bad");
+    };
+  }
+
+  // ---------- sending ----------
+
+  function send() {
+    var text = input.value.trim();
+
+    if (!text || waiting) { return; }
+
+    // No chat open yet - start one, then send.
+    if (activeId === null) {
+      newConversation().then(function () { send(); });
+      return;
+    }
+
+    input.value = "";
+    input.style.height = "auto";
+
+    addBubble("user", text);
+    setWaiting(true);
+    addTyping();
+
+    api("/api/chat/", {
+      method: "POST",
+      body: JSON.stringify({
+        message: text,
+        conversation_id: activeId
+      })
+    }).catch(function (e) {
+      removeTyping();
+      addBubble("error", "Could not send: " + e.message);
+      setWaiting(false);
+    });
+  }
+
+  // ---------- events ----------
+
+  sendBtn.addEventListener("click", send);
+
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+
+  input.addEventListener("input", function () {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 160) + "px";
+  });
+
+  document.getElementById("newChat").addEventListener("click", function () {
+    newConversation();
+  });
+
+  // ---------- boot ----------
+
+  loadConversations().then(function () {
+    var first = convList.querySelector(".conv");
+    if (first) { openConversation(Number(first.dataset.id)); }
+  });
+
+  input.focus();
+})();
+</script>
+{% endblock %}

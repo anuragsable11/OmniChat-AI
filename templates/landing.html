@@ -1,0 +1,1624 @@
+{% extends "base.html" %}
+
+{% block title %}OmniChat AI · Private AI chat on your own hardware{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block style %}
+  /* Landing-only palette: ink background, teal / cyan / lime accents. */
+  :root {
+    --bg:      #06080d;
+    --panel:   #0b0f16;
+    --panel-2: #111722;
+    --line:    rgba(255, 255, 255, .08);
+    --line-2:  rgba(255, 255, 255, .14);
+    --text:    #eef2f7;
+    --muted:   #8a94a7;
+    --teal:    #2dd4bf;
+    --cyan:    #38bdf8;
+    --lime:    #a3e635;
+    --coral:   #fb7185;
+    --amber:   #fbbf24;
+    --grad:    linear-gradient(110deg, #2dd4bf 0%, #38bdf8 45%, #a3e635 100%);
+    --display: "Space Grotesk", -apple-system, "Segoe UI", sans-serif;
+    --mono:    "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    overflow-x: hidden;
+    font-family: Inter, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+  }
+
+  /* film grain over everything, keeps the gradients from banding */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: .05;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  ::selection { background: rgba(45, 212, 191, .3); }
+
+  a { color: inherit; text-decoration: none; }
+
+  .container {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .grad {
+    background: var(--grad);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: sheen 6s ease-in-out infinite alternate;
+  }
+
+  @keyframes sheen { to { background-position: 100% 0; } }
+
+  .mono { font-family: var(--mono); }
+
+  /* ---------------- buttons ---------------- */
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 22px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 14.5px;
+    border: 1px solid transparent;
+    transition: transform .25s ease, box-shadow .25s ease,
+                background .25s ease, border-color .25s ease;
+  }
+
+  .btn-primary {
+    background: var(--grad);
+    color: #03130f;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .15) inset,
+                0 10px 30px -10px rgba(45, 212, 191, .7);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .25) inset,
+                0 18px 40px -12px rgba(163, 230, 53, .6);
+  }
+
+  .btn-ghost {
+    background: rgba(255, 255, 255, .04);
+    border-color: var(--line-2);
+    color: var(--text);
+    backdrop-filter: blur(8px);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(255, 255, 255, .24);
+  }
+
+  .btn .arrow {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(3, 19, 15, .15);
+    font-size: 13px;
+    transition: transform .25s ease;
+  }
+
+  .btn:hover .arrow { transform: translateX(3px) rotate(-45deg); }
+
+  /* ---------------- nav ---------------- */
+
+  .nav {
+    position: fixed;
+    top: 14px;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .nav-inner {
+    pointer-events: auto;
+    max-width: 1080px;
+    margin: 0 auto;
+    height: 58px;
+    padding: 0 10px 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: background .35s ease, border-color .35s ease,
+                box-shadow .35s ease, max-width .35s ease;
+  }
+
+  .nav.scrolled .nav-inner {
+    max-width: 920px;
+    background: rgba(11, 15, 22, .7);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border-color: var(--line-2);
+    box-shadow: 0 20px 40px -20px rgba(0, 0, 0, .8);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -.2px;
+  }
+
+  .logo {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: grid;
+    place-items: center;
+  }
+
+  .logo::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    box-shadow: 0 0 0 3px rgba(6, 8, 13, .25);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .nav-links a {
+    padding: 7px 14px;
+    border-radius: 999px;
+    transition: color .2s ease, background .2s ease;
+  }
+
+  .nav-links a:hover { color: var(--text); background: rgba(255, 255, 255, .06); }
+
+  .nav-cta { display: flex; gap: 8px; align-items: center; }
+  .nav-cta .btn { padding: 9px 16px; font-size: 13.5px; }
+  .nav-cta .btn .arrow { width: 18px; height: 18px; font-size: 11px; }
+
+  /* ---------------- hero ---------------- */
+
+  .hero {
+    position: relative;
+    padding: 170px 0 40px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .aurora {
+    position: absolute;
+    inset: -20% -10% auto;
+    height: 900px;
+    pointer-events: none;
+    filter: blur(80px) saturate(130%);
+    opacity: .55;
+  }
+
+  .aurora span {
+    position: absolute;
+    border-radius: 50%;
+    mix-blend-mode: screen;
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+
+  .aurora span:nth-child(1) { width: 620px; height: 420px; left: 8%;  top: 10%; background: #0f766e; }
+  .aurora span:nth-child(2) { width: 560px; height: 380px; left: 42%; top: 0;   background: #0369a1; animation-delay: -7s; }
+  .aurora span:nth-child(3) { width: 420px; height: 320px; left: 64%; top: 22%; background: #4d7c0f; animation-delay: -13s; }
+  .aurora span:nth-child(4) { width: 300px; height: 240px; left: 26%; top: 36%; background: #9f1239; opacity: .5; animation-delay: -4s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50%  { transform: translate(80px, 30px) rotate(20deg) scale(1.1); }
+    100% { transform: translate(-60px, 60px) rotate(-10deg) scale(.92); }
+  }
+
+  .dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, .12) 1px, transparent 1px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 25%, #000, transparent 75%);
+    mask-image: radial-gradient(ellipse 60% 50% at 50% 25%, #000, transparent 75%);
+    pointer-events: none;
+  }
+
+  .hero .container { position: relative; }
+
+  .announce {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 14px 5px 5px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: rgba(255, 255, 255, .04);
+    backdrop-filter: blur(8px);
+    font-size: 13px;
+    color: #cfd6e2;
+    margin-bottom: 30px;
+    transition: border-color .2s ease;
+  }
+
+  .announce:hover { border-color: rgba(45, 212, 191, .5); }
+
+  .announce .tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(163, 230, 53, .14);
+    color: var(--lime);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .5px;
+  }
+
+  .hero h1 {
+    margin: 0 auto 24px;
+    max-width: 900px;
+    font-family: var(--display);
+    font-size: clamp(42px, 7vw, 84px);
+    line-height: 1.02;
+    letter-spacing: -2.5px;
+    font-weight: 700;
+  }
+
+  .word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-bottom: .08em;
+  }
+
+  .word > span { display: inline-block; }
+
+  .js .word > span {
+    transform: translateY(105%);
+    animation: rise .9s cubic-bezier(.2, .8, .2, 1) forwards;
+    animation-delay: calc(var(--w) * 70ms + 150ms);
+  }
+
+  .js .word > .grad {
+    animation: rise .9s cubic-bezier(.2, .8, .2, 1) forwards,
+               sheen 6s ease-in-out infinite alternate;
+    animation-delay: calc(var(--w) * 70ms + 150ms), 0s;
+  }
+
+  @keyframes rise { to { transform: none; } }
+
+  .hero .lead {
+    margin: 0 auto 36px;
+    max-width: 600px;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .trust {
+    margin-top: 26px;
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .trust span { display: inline-flex; align-items: center; gap: 8px; }
+
+  .trust i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 10px var(--lime);
+  }
+
+  /* ---------------- product mockup ---------------- */
+
+  .stage {
+    position: relative;
+    margin: 70px auto 0;
+    max-width: 980px;
+    perspective: 1800px;
+  }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    top: 12%;
+    bottom: -6%;
+    background: var(--grad);
+    filter: blur(90px);
+    opacity: .28;
+    border-radius: 50%;
+  }
+
+  .mock {
+    --tilt: 22deg;
+    --scale: .92;
+    position: relative;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(17, 23, 34, .95), rgba(11, 15, 22, .95));
+    border: 1px solid var(--line-2);
+    box-shadow: 0 50px 100px -40px rgba(0, 0, 0, .9),
+                0 0 0 1px rgba(255, 255, 255, .03) inset;
+    overflow: hidden;
+    text-align: left;
+    transform: rotateX(var(--tilt)) scale(var(--scale));
+    transform-origin: 50% 0;
+    will-change: transform;
+  }
+
+  .mock::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .06), transparent 30%);
+  }
+
+  .m-side {
+    border-right: 1px solid var(--line);
+    padding: 16px 12px;
+    background: rgba(6, 8, 13, .5);
+  }
+
+  .m-dots { display: flex; gap: 7px; margin: 2px 4px 18px; }
+  .m-dots i { width: 10px; height: 10px; border-radius: 50%; background: #2a3242; }
+  .m-dots i:nth-child(1) { background: #fb7185; }
+  .m-dots i:nth-child(2) { background: #fbbf24; }
+  .m-dots i:nth-child(3) { background: #a3e635; }
+
+  .m-new {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px dashed var(--line-2);
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .m-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    color: #5b6578;
+    margin: 0 6px 8px;
+  }
+
+  .m-conv {
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+
+  .m-conv.on {
+    background: rgba(45, 212, 191, .1);
+    color: var(--text);
+    box-shadow: inset 2px 0 0 var(--teal);
+  }
+
+  .m-main { display: flex; flex-direction: column; min-width: 0; }
+
+  .m-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+
+  .m-head b { font-weight: 600; }
+
+  .m-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--lime);
+  }
+
+  .m-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--lime);
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(163, 230, 53, .6); }
+    50%      { box-shadow: 0 0 0 6px rgba(163, 230, 53, 0); }
+  }
+
+  .m-body {
+    height: 320px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .bubble {
+    max-width: 78%;
+    padding: 10px 15px;
+    border-radius: 16px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    animation: pop .4s cubic-bezier(.2, .9, .3, 1.2) both;
+  }
+
+  .bubble.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #0d9488, #0284c7);
+    color: #fff;
+    border-bottom-right-radius: 5px;
+  }
+
+  .bubble.bot {
+    align-self: flex-start;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 5px;
+  }
+
+  .bubble.leaving { animation: out .4s ease forwards; }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(12px) scale(.95); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @keyframes out { to { opacity: 0; transform: translateY(-14px); } }
+
+  .caret {
+    display: inline-block;
+    width: 2px;
+    height: 15px;
+    margin-left: 3px;
+    vertical-align: -3px;
+    background: var(--teal);
+    animation: blink 1s steps(2) infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .typing { display: inline-flex; gap: 4px; padding: 4px 0; }
+
+  .typing i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+
+  .typing i:nth-child(2) { animation-delay: .15s; background: var(--cyan); }
+  .typing i:nth-child(3) { animation-delay: .3s;  background: var(--lime); }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: .45; }
+    30%           { transform: translateY(-5px); opacity: 1; }
+  }
+
+  .m-input {
+    margin: 0 20px 18px;
+    padding: 12px 12px 12px 16px;
+    border: 1px solid var(--line-2);
+    border-radius: 14px;
+    background: rgba(6, 8, 13, .6);
+    font-size: 13px;
+    color: #5b6578;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .m-send {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: grid;
+    place-items: center;
+    color: #03130f;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* ---------------- marquee ---------------- */
+
+  .stack { padding: 70px 0 20px; }
+
+  .kicker {
+    display: block;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #5b6578;
+    margin: 0 0 22px;
+  }
+
+  .marquee {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+  }
+
+  .marquee-track {
+    display: flex;
+    gap: 14px;
+    width: max-content;
+    animation: scroll 36s linear infinite;
+  }
+
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .025);
+    font-family: var(--mono);
+    font-size: 14px;
+    color: #b7c0cf;
+    white-space: nowrap;
+    transition: border-color .2s ease, color .2s ease;
+  }
+
+  .pill:hover { border-color: rgba(45, 212, 191, .5); color: #fff; }
+
+  .pill i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--c, var(--teal));
+    transform: rotate(45deg);
+  }
+
+  @keyframes scroll { to { transform: translateX(calc(-50% - 7px)); } }
+
+  /* ---------------- section heads ---------------- */
+
+  section.block { padding: 120px 0; position: relative; }
+
+  .head { max-width: 680px; margin: 0 0 56px; }
+  .head.center { margin-left: auto; margin-right: auto; text-align: center; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 16px;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 18px;
+    height: 1px;
+    background: var(--teal);
+  }
+
+  .head h2 {
+    margin: 0 0 16px;
+    font-family: var(--display);
+    font-size: clamp(32px, 4.4vw, 52px);
+    letter-spacing: -1.5px;
+    line-height: 1.05;
+  }
+
+  .head p { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.6; }
+
+  /* ---------------- bento ---------------- */
+
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+
+  .tile {
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    grid-column: span 2;
+    padding: 28px;
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    transition: transform .35s ease;
+  }
+
+  .tile.w4 { grid-column: span 4; }
+  .tile.w6 { grid-column: span 6; }
+
+  /* border that lights up under the cursor */
+  .tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    padding: 1px;
+    background: radial-gradient(300px circle at var(--mx) var(--my),
+                                rgba(45, 212, 191, .8), transparent 60%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity .3s ease;
+    pointer-events: none;
+  }
+
+  .tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(420px circle at var(--mx) var(--my),
+                                rgba(45, 212, 191, .07), transparent 50%);
+    opacity: 0;
+    transition: opacity .3s ease;
+  }
+
+  .tile:hover { transform: translateY(-3px); }
+  .tile:hover::before, .tile:hover::after { opacity: 1; }
+
+  .tile .tag {
+    align-self: flex-start;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+    color: var(--c);
+    background: color-mix(in srgb, var(--c) 10%, transparent);
+    margin-bottom: 18px;
+  }
+
+  .tile h3 {
+    margin: 0 0 8px;
+    font-family: var(--display);
+    font-size: 21px;
+    letter-spacing: -.3px;
+  }
+
+  .tile p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+
+  .viz { margin-top: auto; padding-top: 26px; }
+
+  /* terminal viz */
+  .term {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.9;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, .35);
+    border: 1px solid var(--line);
+    color: #9aa4b6;
+  }
+
+  .term .p { color: var(--lime); }
+  .term .k { color: var(--cyan); }
+  .term .z { color: var(--teal); font-weight: 500; }
+
+  .term div { opacity: 0; transform: translateX(-6px); }
+
+  .in .term div {
+    animation: line .5s ease forwards;
+    animation-delay: calc(var(--l) * 350ms + 300ms);
+  }
+
+  @keyframes line { to { opacity: 1; transform: none; } }
+
+  /* realtime viz */
+  .radar {
+    position: relative;
+    height: 120px;
+    display: grid;
+    place-items: center;
+  }
+
+  .radar b {
+    position: relative;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: grid;
+    place-items: center;
+    color: #03130f;
+    font-size: 18px;
+  }
+
+  .radar i {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--cyan);
+    animation: ripple 3s ease-out infinite;
+  }
+
+  .radar i:nth-child(2) { animation-delay: 1s; }
+  .radar i:nth-child(3) { animation-delay: 2s; }
+
+  @keyframes ripple {
+    from { transform: scale(1); opacity: .8; }
+    to   { transform: scale(4.2); opacity: 0; }
+  }
+
+  /* memory viz */
+  .turns { display: flex; gap: 6px; align-items: flex-end; height: 70px; }
+
+  .turns i {
+    flex: 1;
+    border-radius: 6px 6px 3px 3px;
+    background: linear-gradient(180deg, var(--lime), rgba(163, 230, 53, .15));
+    height: calc(var(--h) * 1%);
+    transform-origin: bottom;
+    transform: scaleY(0);
+  }
+
+  .in .turns i {
+    animation: grow .7s cubic-bezier(.2, .8, .2, 1) forwards;
+    animation-delay: calc(var(--n) * 80ms + 200ms);
+  }
+
+  @keyframes grow { to { transform: scaleY(1); } }
+
+  .turns-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #5b6578;
+  }
+
+  /* queue viz */
+  .queue { display: grid; gap: 8px; }
+
+  .job {
+    display: grid;
+    grid-template-columns: 70px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: #8a94a7;
+  }
+
+  .job .bar {
+    height: 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .06);
+    overflow: hidden;
+  }
+
+  .job .bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--amber), var(--coral));
+    animation: fill 3.6s ease-in-out infinite;
+    animation-delay: var(--dl);
+  }
+
+  @keyframes fill {
+    0%   { width: 0; }
+    70%  { width: 100%; }
+    100% { width: 100%; }
+  }
+
+  /* history viz */
+  .hist { display: grid; gap: 8px; }
+
+  .hist div {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid var(--line);
+    font-size: 13px;
+    transition: border-color .25s ease, transform .25s ease;
+  }
+
+  .hist div:hover { border-color: rgba(56, 189, 248, .5); transform: translateX(4px); }
+  .hist span { color: #5b6578; font-family: var(--mono); font-size: 11px; }
+
+  /* api tile */
+  .api {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .code {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    padding: 20px 22px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, .4);
+    border: 1px solid var(--line);
+    color: #c7cfdb;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .code .m { color: var(--lime); }
+  .code .u { color: var(--cyan); }
+  .code .s { color: #fda4af; }
+  .code .c { color: #5b6578; }
+  .code .n { color: var(--amber); }
+
+  /* ---------------- timeline ---------------- */
+
+  .how {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 70px;
+    align-items: start;
+  }
+
+  .how .head { position: sticky; top: 130px; }
+
+  .timeline { position: relative; padding-left: 64px; }
+
+  .timeline::before,
+  .timeline .fill {
+    content: "";
+    position: absolute;
+    left: 21px;
+    top: 10px;
+    width: 2px;
+    border-radius: 2px;
+  }
+
+  .timeline::before { bottom: 10px; background: var(--line); }
+
+  .timeline .fill {
+    height: 0;
+    background: linear-gradient(180deg, var(--teal), var(--cyan), var(--lime));
+    box-shadow: 0 0 12px rgba(45, 212, 191, .6);
+  }
+
+  .t-step { position: relative; padding: 0 0 56px; }
+  .t-step:last-child { padding-bottom: 0; }
+
+  .t-step .n {
+    position: absolute;
+    left: -64px;
+    top: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg);
+    border: 1px solid var(--line-2);
+    color: var(--muted);
+    transition: all .4s ease;
+  }
+
+  .t-step.active .n {
+    border-color: var(--teal);
+    color: #03130f;
+    background: var(--grad);
+    box-shadow: 0 0 0 6px rgba(45, 212, 191, .12);
+  }
+
+  .t-step h3 {
+    margin: 8px 0 8px;
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: -.3px;
+  }
+
+  .t-step p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+
+  .t-step code {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--line);
+    color: var(--cyan);
+  }
+
+  /* ---------------- stats ---------------- */
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .stat {
+    padding: 36px 30px;
+    border-radius: 22px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .03), transparent);
+  }
+
+  .stat .value {
+    font-family: var(--display);
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+
+  .stat .label { color: var(--muted); font-size: 14.5px; }
+
+  /* ---------------- cta ---------------- */
+
+  .cta {
+    position: relative;
+    padding: 90px 40px;
+    border-radius: 32px;
+    text-align: center;
+    overflow: hidden;
+    background: #081210;
+    border: 1px solid rgba(45, 212, 191, .25);
+  }
+
+  .cta .mesh {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(40% 60% at 20% 20%, rgba(45, 212, 191, .35), transparent 70%),
+      radial-gradient(40% 60% at 80% 30%, rgba(56, 189, 248, .3), transparent 70%),
+      radial-gradient(50% 60% at 50% 100%, rgba(163, 230, 53, .25), transparent 70%);
+    animation: mesh 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes mesh {
+    to { transform: scale(1.15) rotate(4deg); filter: hue-rotate(-20deg); }
+  }
+
+  .cta > *:not(.mesh) { position: relative; }
+
+  .cta h2 {
+    margin: 0 0 16px;
+    font-family: var(--display);
+    font-size: clamp(34px, 5vw, 60px);
+    letter-spacing: -2px;
+    line-height: 1.02;
+  }
+
+  .cta p {
+    margin: 0 auto 34px;
+    color: #b7c0cf;
+    max-width: 520px;
+    font-size: 17px;
+  }
+
+  /* ---------------- footer ---------------- */
+
+  footer {
+    padding: 40px 0 50px;
+    margin-top: 40px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  footer .brand { font-size: 15px; color: var(--text); }
+  footer .logo { width: 22px; height: 22px; }
+  footer .logo::after { width: 9px; height: 9px; }
+  footer nav { display: flex; gap: 24px; }
+  footer nav a:hover { color: var(--teal); }
+
+  /* ---------------- scroll reveal ---------------- */
+
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(8px);
+    transition: opacity .9s cubic-bezier(.2, .8, .2, 1),
+                transform .9s cubic-bezier(.2, .8, .2, 1),
+                filter .9s cubic-bezier(.2, .8, .2, 1);
+    transition-delay: calc(var(--d, 0) * 100ms);
+  }
+
+  .js .reveal.in { opacity: 1; transform: none; filter: none; }
+
+  /* ---------------- responsive ---------------- */
+
+  @media (max-width: 960px) {
+    .nav-links { display: none; }
+    .mock { grid-template-columns: 1fr; }
+    .m-side { display: none; }
+    .tile, .tile.w4 { grid-column: span 3; }
+    .api { grid-template-columns: 1fr; gap: 24px; }
+    .how { grid-template-columns: 1fr; gap: 20px; }
+    .how .head { position: static; }
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 0 16px; }
+    .nav { top: 10px; }
+    .nav-inner { margin: 0 12px; }
+    .nav-cta .btn-ghost { display: none; }
+    .hero { padding-top: 130px; }
+    .hero h1 { letter-spacing: -1.5px; }
+    .tile, .tile.w4, .tile.w6 { grid-column: span 6; }
+    .stats { grid-template-columns: 1fr; }
+    .stat .value { font-size: 52px; }
+    .m-body { height: 280px; padding: 16px; }
+    .bubble { max-width: 88%; }
+    .cta { padding: 60px 22px; border-radius: 24px; }
+    section.block { padding: 84px 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+    html { scroll-behavior: auto; }
+    .mock { --tilt: 0deg !important; --scale: 1 !important; }
+  }
+{% endblock %}
+
+{% block body %}
+<script>document.documentElement.classList.add("js");</script>
+
+<!-- ============================ NAV ============================ -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="{% url 'landing_page' %}" class="brand">
+      <span class="logo"></span> OmniChat
+    </a>
+
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#api">API</a>
+    </nav>
+
+    <div class="nav-cta">
+      {% if user.is_authenticated %}
+        <a href="{% url 'chat_page' %}" class="btn btn-primary">Open app <span class="arrow">&rarr;</span></a>
+      {% else %}
+        <a href="{% url 'login_page' %}" class="btn btn-ghost">Sign in</a>
+        <a href="{% url 'chat_page' %}" class="btn btn-primary">Get started <span class="arrow">&rarr;</span></a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<!-- ============================ HERO ============================ -->
+<section class="hero">
+  <div class="aurora"><span></span><span></span><span></span><span></span></div>
+  <div class="dots"></div>
+
+  <div class="container">
+    <a href="#how" class="announce reveal">
+      <span class="tag">LOCAL</span> Qwen3 via Ollama &mdash; zero cloud calls &rarr;
+    </a>
+
+    <h1>
+      <span class="word"><span style="--w:0">Private</span></span>
+      <span class="word"><span style="--w:1">AI</span></span>
+      <span class="word"><span style="--w:2">chat,</span></span>
+      <br>
+      <span class="word"><span class="grad" style="--w:3">on</span></span>
+      <span class="word"><span class="grad" style="--w:4">your</span></span>
+      <span class="word"><span class="grad" style="--w:5">own</span></span>
+      <span class="word"><span class="grad" style="--w:6">terms.</span></span>
+    </h1>
+
+    <p class="lead reveal" style="--d:4">
+      OmniChat AI runs a language model on your own server and delivers
+      answers live to your browser. No API keys, no per-token bills, and
+      not a single message leaves your infrastructure.
+    </p>
+
+    <div class="hero-actions reveal" style="--d:5">
+      {% if user.is_authenticated %}
+        <a href="{% url 'chat_page' %}" class="btn btn-primary">Continue chatting <span class="arrow">&rarr;</span></a>
+      {% else %}
+        <a href="{% url 'chat_page' %}" class="btn btn-primary">Start chatting free <span class="arrow">&rarr;</span></a>
+      {% endif %}
+      <a href="#features" class="btn btn-ghost">Explore features</a>
+    </div>
+
+    <div class="trust reveal" style="--d:6">
+      <span><i></i> Self-hosted</span>
+      <span><i></i> Conversation memory</span>
+      <span><i></i> Live WebSocket replies</span>
+    </div>
+
+    <div class="stage reveal" style="--d:6">
+      <div class="mock" id="mock">
+        <aside class="m-side">
+          <div class="m-dots"><i></i><i></i><i></i></div>
+          <div class="m-new">+ New chat</div>
+          <div class="m-label">TODAY</div>
+          <div class="m-conv on">Q3 planning notes</div>
+          <div class="m-conv">Trip itinerary ideas</div>
+          <div class="m-conv">Fix my SQL query</div>
+          <div class="m-label" style="margin-top:14px">EARLIER</div>
+          <div class="m-conv">Email to landlord</div>
+          <div class="m-conv">Recipe for dinner</div>
+        </aside>
+
+        <div class="m-main">
+          <div class="m-head">
+            <b>Q3 planning notes</b>
+            <span class="m-status">qwen3 · local</span>
+          </div>
+          <div class="m-body" id="mockBody"></div>
+          <div class="m-input">
+            <span>Message OmniChat&hellip;</span>
+            <span class="m-send">&uarr;</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ STACK ============================ -->
+<div class="stack">
+  <span class="kicker">Powered by open source</span>
+  <div class="marquee">
+    <div class="marquee-track">
+      {% for _ in "ab" %}
+        <span class="pill"><i style="--c:#2dd4bf"></i>Django</span>
+        <span class="pill"><i style="--c:#38bdf8"></i>Channels</span>
+        <span class="pill"><i style="--c:#a3e635"></i>Celery</span>
+        <span class="pill"><i style="--c:#fb7185"></i>Redis</span>
+        <span class="pill"><i style="--c:#fbbf24"></i>Ollama</span>
+        <span class="pill"><i style="--c:#2dd4bf"></i>Qwen3</span>
+        <span class="pill"><i style="--c:#38bdf8"></i>PostgreSQL</span>
+        <span class="pill"><i style="--c:#a3e635"></i>Django REST Framework</span>
+        <span class="pill"><i style="--c:#fb7185"></i>Daphne</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ============================ FEATURES ============================ -->
+<section class="block" id="features">
+  <div class="container">
+    <div class="head reveal">
+      <span class="eyebrow">Features</span>
+      <h2>Built for privacy.<br><span class="grad">Tuned for speed.</span></h2>
+      <p>Everything a modern AI assistant should do, without handing your data to anyone else.</p>
+    </div>
+
+    <div class="bento">
+      <div class="tile w4 reveal" style="--c: var(--lime)">
+        <span class="tag">Privacy</span>
+        <h3>Your model. Your server. Your data.</h3>
+        <p>The language model runs locally through Ollama. Prompts and replies never touch a third-party API.</p>
+        <div class="viz">
+          <div class="term">
+            <div style="--l:0"><span class="p">$</span> ollama serve</div>
+            <div style="--l:1"><span class="k">&rsaquo;</span> listening on 127.0.0.1:11434</div>
+            <div style="--l:2"><span class="k">&rsaquo;</span> model qwen3:4b loaded</div>
+            <div style="--l:3"><span class="k">&rsaquo;</span> external requests: <span class="z">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile reveal" style="--d:1; --c: var(--cyan)">
+        <span class="tag">Real-time</span>
+        <h3>Answers, pushed live</h3>
+        <p>Replies arrive over WebSockets the moment they're ready. No polling, no refresh.</p>
+        <div class="viz">
+          <div class="radar"><i></i><i></i><i></i><b>&#9889;</b></div>
+        </div>
+      </div>
+
+      <div class="tile reveal" style="--c: var(--lime)">
+        <span class="tag">Memory</span>
+        <h3>Keeps the thread</h3>
+        <p>Recent turns are cached in Redis, so follow-up questions just work.</p>
+        <div class="viz">
+          <div class="turns">
+            <i style="--n:0; --h:35"></i><i style="--n:1; --h:48"></i><i style="--n:2; --h:42"></i><i style="--n:3; --h:60"></i>
+            <i style="--n:4; --h:55"></i><i style="--n:5; --h:74"></i><i style="--n:6; --h:82"></i><i style="--n:7; --h:100"></i>
+          </div>
+          <div class="turns-label"><span>turn 1</span><span>turn 8</span></div>
+        </div>
+      </div>
+
+      <div class="tile reveal" style="--d:1; --c: var(--amber)">
+        <span class="tag">Workers</span>
+        <h3>Heavy lifting, off-thread</h3>
+        <p>Celery workers generate answers in the background, so the interface never freezes.</p>
+        <div class="viz">
+          <div class="queue">
+            <div class="job"><span>task #41</span><span class="bar"><i style="--dl:0s"></i></span><span>ok</span></div>
+            <div class="job"><span>task #42</span><span class="bar"><i style="--dl:.6s"></i></span><span>ok</span></div>
+            <div class="job"><span>task #43</span><span class="bar"><i style="--dl:1.2s"></i></span><span>&hellip;</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile reveal" style="--d:2; --c: var(--coral)">
+        <span class="tag">History</span>
+        <h3>Every chat, organised</h3>
+        <p>Conversations are saved and auto-titled so you can pick up right where you left off.</p>
+        <div class="viz">
+          <div class="hist">
+            <div>Q3 planning notes <span>2m</span></div>
+            <div>Fix my SQL query <span>1h</span></div>
+            <div>Trip itinerary ideas <span>1d</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile w6 reveal" id="api" style="--c: var(--cyan)">
+        <div class="api">
+          <div>
+            <span class="tag">Developers</span>
+            <h3>A clean REST API, ready to integrate</h3>
+            <p>Manage bots, conversations and messages over a straightforward JSON API. Send a
+               message, get a task ID back instantly, and receive the answer on the socket.</p>
+          </div>
+          <div class="code"><span class="m">POST</span> <span class="u">/api/chat/</span>
+{
+  <span class="s">"conversation_id"</span>: <span class="n">42</span>,
+  <span class="s">"message"</span>: <span class="s">"Summarise our Q3 notes"</span>
+}
+
+<span class="c">// 200 OK &mdash; returns immediately</span>
+{
+  <span class="s">"task_id"</span>: <span class="s">"9f1c&hellip;e27a"</span>,
+  <span class="s">"status"</span>: <span class="s">"AI response is being generated"</span>
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ HOW IT WORKS ============================ -->
+<section class="block" id="how" style="padding-top: 40px;">
+  <div class="container how">
+    <div class="head reveal">
+      <span class="eyebrow">How it works</span>
+      <h2>From question to answer in <span class="grad">four steps.</span></h2>
+      <p>A simple, resilient pipeline that keeps heavy work away from your browser and your data inside your walls.</p>
+    </div>
+
+    <div class="timeline" id="timeline">
+      <div class="fill" id="fill"></div>
+
+      <div class="t-step">
+        <span class="n">01</span>
+        <h3>You ask</h3>
+        <p>Your message is stored instantly through the Django API and the request returns right away.</p>
+        <code>POST /api/chat/</code>
+      </div>
+      <div class="t-step">
+        <span class="n">02</span>
+        <h3>It's queued</h3>
+        <p>A Celery worker picks up the job together with recent conversation context from Redis.</p>
+        <code>generate_ai_response_task</code>
+      </div>
+      <div class="t-step">
+        <span class="n">03</span>
+        <h3>The model thinks</h3>
+        <p>Qwen3 generates a reply through Ollama, entirely on your own hardware.</p>
+        <code>ollama &middot; qwen3:4b</code>
+      </div>
+      <div class="t-step">
+        <span class="n">04</span>
+        <h3>You get the answer</h3>
+        <p>The finished reply is pushed straight to your screen over an authenticated WebSocket.</p>
+        <code>ws /ws/chat/&lt;id&gt;/</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ STATS ============================ -->
+<section class="block" style="padding-top: 0;">
+  <div class="container">
+    <div class="stats">
+      <div class="stat reveal">
+        <div class="value grad" data-count="0">0</div>
+        <div class="label">Third-party API calls. Ever.</div>
+      </div>
+      <div class="stat reveal" style="--d:1">
+        <div class="value grad" data-count="100" data-suffix="%">0%</div>
+        <div class="label">Of your conversations stay on your server</div>
+      </div>
+      <div class="stat reveal" style="--d:2">
+        <div class="value grad" data-count="8">0</div>
+        <div class="label">Turns of rolling memory per conversation</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ CTA ============================ -->
+<section class="block" style="padding-top: 0; padding-bottom: 60px;">
+  <div class="container">
+    <div class="cta reveal">
+      <div class="mesh"></div>
+      <span class="eyebrow">Get started</span>
+      <h2>Your AI. Your rules.<br><span class="grad">Start in seconds.</span></h2>
+      <p>Sign in and open a conversation. Everything you say stays exactly where it belongs &mdash; with you.</p>
+      <div class="hero-actions">
+        {% if user.is_authenticated %}
+          <a href="{% url 'chat_page' %}" class="btn btn-primary">Open OmniChat <span class="arrow">&rarr;</span></a>
+        {% else %}
+          <a href="{% url 'chat_page' %}" class="btn btn-primary">Start chatting <span class="arrow">&rarr;</span></a>
+          <a href="{% url 'login_page' %}" class="btn btn-ghost">Sign in</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FOOTER ============================ -->
+<footer>
+  <div class="container">
+    <a href="{% url 'landing_page' %}" class="brand"><span class="logo"></span> OmniChat AI</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#api">API</a>
+      <a href="{% url 'chat_page' %}">App</a>
+    </nav>
+    <span>&copy; <span id="year">2026</span> OmniChat AI</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  /* ---- scroll-driven effects: nav, mockup tilt, timeline fill ---- */
+  var nav = document.getElementById("nav");
+  var mock = document.getElementById("mock");
+  var timeline = document.getElementById("timeline");
+  var fill = document.getElementById("fill");
+  var steps = timeline.querySelectorAll(".t-step");
+  var ticking = false;
+
+  function update() {
+    ticking = false;
+    var vh = window.innerHeight;
+
+    nav.classList.toggle("scrolled", window.scrollY > 20);
+
+    if (!reduceMotion) {
+      // mockup lies back at first and flattens as it scrolls into view
+      var r = mock.getBoundingClientRect();
+      var p = Math.min(Math.max((vh - r.top) / (vh * 0.75), 0), 1);
+      mock.style.setProperty("--tilt", (22 * (1 - p)).toFixed(2) + "deg");
+      mock.style.setProperty("--scale", (0.92 + 0.08 * p).toFixed(3));
+    }
+
+    // timeline line grows toward a point 60% down the viewport
+    var t = timeline.getBoundingClientRect();
+    var mark = vh * 0.6;
+    var h = Math.min(Math.max(mark - t.top, 0), t.height - 20);
+    fill.style.height = h + "px";
+
+    steps.forEach(function (s) {
+      s.classList.toggle("active", s.getBoundingClientRect().top < mark);
+    });
+  }
+
+  function onScroll() {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  update();
+
+  /* ---- scroll reveal + stat counters ---- */
+  function countUp(el) {
+    var target = parseInt(el.getAttribute("data-count"), 10);
+    var suffix = el.getAttribute("data-suffix") || "";
+    if (reduceMotion || target === 0) { el.textContent = target + suffix; return; }
+    var start = null, duration = 1600;
+    function tick(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / duration, 1);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 4))) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add("in");
+      e.target.querySelectorAll("[data-count]").forEach(countUp);
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.15, rootMargin: "0px 0px -40px 0px" });
+
+  document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+
+  /* ---- cursor-tracking border glow on bento tiles ---- */
+  document.querySelectorAll(".tile").forEach(function (tile) {
+    tile.addEventListener("mousemove", function (e) {
+      var r = tile.getBoundingClientRect();
+      tile.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      tile.style.setProperty("--my", (e.clientY - r.top) + "px");
+    });
+  });
+
+  /* ---- animated chat demo in the hero ---- */
+  var body = document.getElementById("mockBody");
+  var script = [
+    ["user", "Summarise the key points of our Q3 planning notes."],
+    ["bot",  "Three priorities stand out: ship the mobile beta, cut infra costs by 15%, and hire two backend engineers."],
+    ["user", "Which of those is most at risk?"],
+    ["bot",  "Hiring. The notes flag a six-week lead time, so starting interviews this month keeps it on track."],
+    ["user", "Draft a short update for the team."],
+    ["bot",  "Team — Q3 focus: mobile beta, 15% infra savings, and two backend hires. Interviews start this month. Questions welcome!"]
+  ];
+
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function addBubble(role) {
+    var b = document.createElement("div");
+    b.className = "bubble " + role;
+    body.appendChild(b);
+    return b;
+  }
+
+  function trim() {
+    var bubbles = body.querySelectorAll(".bubble:not(.leaving)");
+    if (bubbles.length > 4) {
+      var old = bubbles[0];
+      old.classList.add("leaving");
+      setTimeout(function () { old.remove(); }, 400);
+    }
+  }
+
+  async function typeText(el, text) {
+    var caret = document.createElement("span");
+    caret.className = "caret";
+    el.textContent = "";
+    el.appendChild(caret);
+    var words = text.split(" ");
+    for (var i = 0; i < words.length; i++) {
+      caret.before((i ? " " : "") + words[i]);
+      await wait(45 + Math.random() * 55);
+    }
+    await wait(250);
+    caret.remove();
+  }
+
+  async function run() {
+    if (reduceMotion) {
+      script.slice(0, 2).forEach(function (m) { addBubble(m[0]).textContent = m[1]; });
+      return;
+    }
+    await wait(900);
+    while (true) {
+      for (var i = 0; i < script.length; i++) {
+        var role = script[i][0], text = script[i][1];
+        if (role === "user") {
+          await wait(900);
+          addBubble("user").textContent = text;
+          trim();
+        } else {
+          await wait(400);
+          var b = addBubble("bot");
+          b.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+          trim();
+          await wait(1100);
+          await typeText(b, text);
+        }
+      }
+      await wait(2600);
+      body.querySelectorAll(".bubble").forEach(function (b) { b.classList.add("leaving"); });
+      await wait(450);
+      body.innerHTML = "";
+    }
+  }
+
+  run();
+})();
+</script>
+{% endblock %}

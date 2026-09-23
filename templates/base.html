@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}OmniChat AI{% endblock %}</title>
+{% block head %}{% endblock %}
+<style>
+  :root {
+    --bg:        #0f1117;
+    --panel:     #171922;
+    --panel-2:   #1e212c;
+    --border:    #2a2e3d;
+    --text:      #e6e8ee;
+    --muted:     #8b90a4;
+    --accent:    #6c7cff;
+    --accent-dk: #5566f0;
+    --user-bg:   #2a3160;
+    --bot-bg:    #1e212c;
+    --danger:    #ff6b6b;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  button { font: inherit; cursor: pointer; }
+
+  input, textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  ::-webkit-scrollbar { width: 10px; }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2c3142;
+    border-radius: 6px;
+  }
+
+  {% block style %}{% endblock %}
+</style>
+</head>
+<body>
+{% block body %}{% endblock %}
+</body>
+</html>
